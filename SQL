@@ -1,0 +1,1128 @@
+# DATABASE CREATION
+
+
+CREATE DATABASE urbankart;
+
+USE urbankart;
+
+-- =====================================================
+-- Categories
+-- =====================================================
+
+CREATE TABLE categories (
+    category_id INT PRIMARY KEY,
+    category_name VARCHAR(100),
+    department VARCHAR(100),
+    is_active VARCHAR(10),
+    created_date DATE
+);
+
+UPDATE categories
+SET is_active =
+CASE
+    WHEN is_active = 'TRUE' THEN '1'
+    WHEN is_active = 'FALSE' THEN '0'
+END;
+
+
+-- =====================================================
+-- Suppliers
+-- =====================================================
+
+CREATE TABLE suppliers (
+    supplier_id INT PRIMARY KEY,
+    supplier_name VARCHAR(150) NOT NULL,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    lead_time_days INT,
+    quality_rating DECIMAL(3,2),
+    contact_person VARCHAR(100),
+    email VARCHAR(150),
+    phone VARCHAR(20),
+    is_active VARCHAR(10)
+);
+
+UPDATE suppliers
+SET is_active =
+CASE
+    WHEN is_active = 'TRUE' THEN '1'
+    WHEN is_active = 'FALSE' THEN '0'
+END;
+
+-- =====================================================
+-- Warehouses
+-- =====================================================
+
+CREATE TABLE warehouses (
+    warehouse_id INT PRIMARY KEY,
+    warehouse_name VARCHAR(150) NOT NULL,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    capacity INT,
+    manager_name VARCHAR(100),
+    opening_date DATE,
+    is_active VARCHAR(10)
+);
+
+UPDATE warehouses
+SET is_active =
+CASE
+    WHEN is_active = 'TRUE' THEN '1'
+    WHEN is_active = 'FALSE' THEN '0'
+END;
+
+-- =====================================================
+-- Couriers
+-- =====================================================
+
+CREATE TABLE couriers (
+    courier_id INT PRIMARY KEY,
+    courier_name VARCHAR(100) NOT NULL,
+    service_type VARCHAR(50),
+    headquarters_city VARCHAR(100),
+    average_rating DECIMAL(3,2),
+    is_active VARCHAR(10)
+);
+
+UPDATE couriers
+SET is_active =
+CASE
+    WHEN is_active = 'TRUE' THEN '1'
+    WHEN is_active = 'FALSE' THEN '0'
+END;
+
+-- =====================================================
+-- Customers
+-- =====================================================
+
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    gender VARCHAR(10),
+    age INT,
+    email VARCHAR(150) UNIQUE,
+    phone VARCHAR(20),
+    city VARCHAR(100),
+    state VARCHAR(100),
+	pincode VARCHAR(10),
+    signup_date DATE,
+    acquisition_channel VARCHAR(50),
+    loyalty_tier VARCHAR(20),
+    is_active VARCHAR(10)
+);
+
+
+
+UPDATE customers
+SET is_active =
+CASE
+    WHEN is_active = 'TRUE' THEN '1'
+    WHEN is_active = 'FALSE' THEN '0'
+END;
+
+
+-- =====================================================
+-- Marketing Campaigns
+-- =====================================================
+
+CREATE TABLE marketing_campaigns (
+    campaign_id INT PRIMARY KEY,
+    campaign_name VARCHAR(150) NOT NULL,
+    channel VARCHAR(50),
+    objective VARCHAR(100),
+    budget DECIMAL(12,2),
+    start_date DATE,
+    end_date DATE,
+    status VARCHAR(30)
+);
+
+-- =====================================================
+-- Date Dimension
+-- =====================================================
+
+CREATE TABLE date_dim (
+    date_id INT PRIMARY KEY,
+    full_date DATE,
+    day INT,
+    day_name VARCHAR(15),
+    week_of_year INT,
+    month INT,
+    month_name VARCHAR(15),
+    quarter VARCHAR(5),
+    year INT,
+    season VARCHAR(20),
+    festival VARCHAR(50),
+    is_weekend VARCHAR(10),
+    is_month_start VARCHAR(10),
+    is_month_end VARCHAR(10),
+    is_quarter_start VARCHAR(10),
+    is_quarter_end VARCHAR(10),
+    is_year_start VARCHAR(10),
+    is_year_end VARCHAR(10)
+);
+		
+
+-- =====================================================
+-- Products
+-- =====================================================
+
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(200) NOT NULL,
+    brand VARCHAR(100),
+    category_id INT,
+    supplier_id INT,
+    cost_price DECIMAL(10,2),
+    selling_price DECIMAL(10,2),
+    weight_kg DECIMAL(6,2),
+    launch_date DATE,
+    is_active VARCHAR(10)
+);
+
+
+UPDATE products
+SET is_active =
+CASE
+    WHEN is_active = 'TRUE' THEN '1'
+    WHEN is_active = 'FALSE' THEN '0'
+END;
+
+-- =====================================================
+-- Inventory
+-- =====================================================
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY,
+    product_id INT NOT NULL,
+    warehouse_id INT NOT NULL,
+    stock_quantity INT NOT NULL,
+    reorder_level INT NOT NULL,
+    reorder_quantity INT NOT NULL,
+    last_restock_date DATE,
+    inventory_status VARCHAR(30)
+);
+
+
+
+-- =====================================================
+-- Orders
+-- =====================================================
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATE,
+    campaign_id VARCHAR(20),
+    payment_method VARCHAR(50),
+    order_status VARCHAR(30),
+    subtotal DECIMAL(12,2),
+    discount_amount DECIMAL(12,2),
+    tax_amount DECIMAL(12,2),
+    shipping_fee DECIMAL(10,2),
+    total_amount DECIMAL(12,2)
+);
+
+
+UPDATE orders
+SET campaign_id = NULL
+WHERE TRIM(campaign_id) IN ('NULL', 'Null', 'null', '');
+
+
+ALTER TABLE orders
+MODIFY campaign_id INT NULL; 
+
+
+-- =====================================================
+-- Order Items
+-- =====================================================
+
+CREATE TABLE order_items (
+    order_item_id INT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(12,2) NOT NULL,
+    gross_amount DECIMAL(12,2) NOT NULL,
+    discount_percent DECIMAL(5,2) NOT NULL,
+    discount_amount DECIMAL(12,2) NOT NULL,
+    line_total DECIMAL(12,2) NOT NULL
+);
+
+
+
+-- =====================================================
+-- Payments
+-- =====================================================
+SET sql_mode='';
+DROP TABLE payments;
+
+CREATE TABLE payments (
+    payment_id INT PRIMARY KEY,
+    order_id INT,
+    payment_method VARCHAR(50),
+    payment_date DATE NULL,
+    payment_status VARCHAR(30),
+    amount_paid DECIMAL(10,2)
+);
+
+
+-- =====================================================
+-- Shipping
+-- =====================================================
+
+CREATE TABLE shipping (
+    shipping_id INT PRIMARY KEY,
+    order_id INT,
+    warehouse_id INT,
+    courier_id INT,
+    dispatch_date DATE NULL,
+    estimated_delivery_date DATE NULL,
+    actual_delivery_date DATE NULL,
+    shipping_status VARCHAR(50)
+);
+
+
+
+-- =====================================================
+-- Returns
+-- =====================================================
+
+CREATE TABLE returns (
+    return_id INT PRIMARY KEY,
+    order_id INT NOT NULL,
+    return_date DATE,
+    return_reason VARCHAR(100),
+    refund_amount DECIMAL(12,2),
+    refund_status VARCHAR(30)
+);
+
+
+-- =====================================================
+-- Reviews
+-- =====================================================
+CREATE TABLE reviews (
+    review_id INT PRIMARY KEY,
+    order_id INT NOT NULL,
+    rating INT,
+    review_date DATE,
+    review_comment VARCHAR(500)
+);
+
+
+
+
+# FOREIGN KEYS
+
+1. PRODUCTS TABLE
+
+ALTER TABLE products
+ADD CONSTRAINT fk_products_category
+FOREIGN KEY (category_id)
+REFERENCES categories(category_id);
+
+ALTER TABLE products
+ADD CONSTRAINT fk_products_supplier
+FOREIGN KEY (supplier_id)
+REFERENCES suppliers(supplier_id);
+
+
+# 2. INVENTORY TABLE
+
+ALTER TABLE inventory
+ADD CONSTRAINT fk_inventory_product
+FOREIGN KEY (product_id)
+REFERENCES products(product_id);
+
+ALTER TABLE inventory
+ADD CONSTRAINT fk_inventory_warehouse
+FOREIGN KEY (warehouse_id)
+REFERENCES warehouses(warehouse_id);
+
+#3. ORDERS TABLE
+# Orders belong to customers, campaigns, and a date.
+
+ALTER TABLE orders
+ADD CONSTRAINT fk_orders_customer
+FOREIGN KEY (customer_id)
+REFERENCES customers(customer_id);
+
+ALTER TABLE orders
+ADD CONSTRAINT fk_orders_campaign
+FOREIGN KEY (campaign_id)
+REFERENCES marketing_campaigns(campaign_id);
+
+SELECT DISTINCT campaign_id
+FROM orders
+WHERE campaign_id IS NOT NULL
+AND campaign_id NOT IN (
+    SELECT campaign_id
+    FROM marketing_campaigns
+);
+
+ALTER TABLE date_dim
+ADD INDEX idx_full_date(full_date);
+
+ALTER TABLE orders
+ADD CONSTRAINT fk_orders_date
+FOREIGN KEY (order_date)
+REFERENCES date_dim(full_date);
+
+# 4.ORDER_ITEMS TABLE 
+# Each order item belongs to an order and a product.
+
+ALTER TABLE order_items
+ADD CONSTRAINT fk_orderitems_order
+FOREIGN KEY (order_id)
+REFERENCES orders(order_id);
+
+ALTER TABLE order_items
+ADD CONSTRAINT fk_orderitems_product
+FOREIGN KEY (product_id)
+REFERENCES products(product_id);
+
+
+#5.  PAYMENTS TABLE
+# Each payment belongs to one order.
+
+SELECT *
+FROM payments
+WHERE payment_date='0000-00-00';
+
+UPDATE payments
+SET payment_date=NULL
+WHERE payment_date='0000-00-00';
+
+ALTER TABLE payments
+ADD CONSTRAINT fk_payments_order
+FOREIGN KEY (order_id)
+REFERENCES orders(order_id);
+
+# 6. SHIPPING TABLE
+# Shipping belongs to an order, warehouse, and courier
+
+ALTER TABLE shipping
+ADD CONSTRAINT fk_shipping_order
+FOREIGN KEY (order_id)
+REFERENCES orders(order_id);
+
+ALTER TABLE shipping
+ADD CONSTRAINT fk_shipping_warehouse
+FOREIGN KEY (warehouse_id)
+REFERENCES warehouses(warehouse_id);
+
+ALTER TABLE shipping
+ADD CONSTRAINT fk_shipping_courier
+FOREIGN KEY (courier_id)
+REFERENCES couriers(courier_id);
+
+
+#7. RETURNS TABLE
+# Each return belongs to one order.
+
+ALTER TABLE returns
+ADD CONSTRAINT fk_returns_order
+FOREIGN KEY (order_id)
+REFERENCES orders(order_id);
+
+# 8 REVIEWS TABLE
+# Each review belongs to one order.
+
+ALTER TABLE reviews
+ADD CONSTRAINT fk_reviews_order
+FOREIGN KEY (order_id)
+REFERENCES orders(order_id);
+
+
+
+
+## BUSINESS KPIs
+
+02. BUSINESS KPIs
+
+# SECTION 1: EXECUTIVE KPIs
+
+## KPI 1 : TOTAL REVENUE
+			# Business Qs: How much revenue have we generated?
+			
+select 
+	round(sum(total_amount),2) AS total_revenue
+from orders
+where order_status = 'Delivered';
+
+
+## KPI 2 : TOTAL ORDERS 
+	
+    select count(*) as total_orders
+    from orders;
+    
+# KPI 3 : DELIVERED ORDERS 
+
+	select count(*) as deleivered_orders
+    from orders
+    where order_status = 'Delivered';
+    
+
+# KPI 4 : TOTAL CUSTOMERS 
+
+	select count(*) as total_customers
+    from customers;
+
+# KPI 5 : AVERAGE ORDER VALUE (AOV)
+		# one of the most important ecommerce KPIs.
+        
+	select 
+		round(avg(total_amount),2) as average_order_value
+	from orders
+    where order_status = 'Delivered';
+    
+
+# KPI 6 : TOTAL PRODUCTS SOLD 
+
+	select sum(quantity) as products_sold
+    from order_items;
+    
+
+
+# SECTION 2: SALES ANALYSIS
+
+# KPI 7 : MONTHLY REVENUE TREND
+
+	select 
+		year(order_date) as year,
+        month(order_date) as month,
+        round(sum(total_amount),2) as revenue
+	from orders
+	where order_status = 'Delivered'
+    group by year(order_date), month(order_date)
+    order by year, month;
+        
+        
+# KPI 8 : MONTHLY ORDER TREND
+
+select 
+	YEAR(order_date),
+    Month(order_date),
+    count(*) as total_orders
+from orders
+group by year(order_date), month(order_date)
+order by year(order_date), month(order_date);
+
+
+# KPI 9 : REVENUE BY PAYMENT METHOD
+
+	select
+		payment_method, 
+        ROUND(SUM(total_amount),2) as revenue
+	from orders
+    where order_status = 'Delivered'
+    group by payment_method
+    order by revenue desc;
+    
+
+# SECTION 3: PRODUCT ANALYSIS
+
+# KPI 10: TOP 10 PRODUCTS BY REVENUE
+
+	select 
+		p.product_name,
+        Round(Sum(oi.line_total),2) as revenue
+	from order_items oi
+    join products p
+    on oi.product_id = p.product_id
+    group by p.product_name
+    order by revenue desc
+    limit 10;
+
+
+# KPI 11: TOP CATEGORIES BY REVENUE
+
+	select 
+		c.category_name,
+        ROUND(SUM(oi.line_total),2) as revenue
+	from order_items oi
+    join products p
+    on oi.product_id = p.product_id
+    join categories c
+    on p.category_id = c.category_id
+    group by c.category_name
+    order by revenue desc;
+    
+    
+# KPI 12 : BEST SELLING PRODUCTS
+
+select
+	p.product_name,
+    sum(oi.quantity) as units_sold
+from order_items oi
+join products p
+on oi.product_id = p.product_id
+group by p.product_name
+order by units_sold desc
+limit 10;
+
+
+# SECTION 4: CUSTOMER ANALYSIS
+
+# KPI 13: TOP 10 CUSTOMERS BY REVENUE
+
+ALTER TABLE customers
+add `name` varchar(100);
+SET SQL_SAFE_UPDATES = 0;
+update customers
+SET `name` = CONCAT(first_name, ' ', last_name);
+
+
+
+select 
+	c.`name`,
+    ROUND(SUM(o.total_amount),2) as total_spent
+from orders o
+join customers c
+on o.customer_id = c.customer_id
+where o.order_status = 'Delivered'
+group by c.`name`
+order by total_spent desc
+limit 10;
+
+
+# KPI 14: Repeat Customers 
+
+SELECT
+COUNT(*) AS repeat_customers
+FROM
+(SELECT customer_id
+FROM orders
+GROUP BY customer_id
+HAVING COUNT(*)>1 
+)t;
+
+
+
+# KPI 15: REPEAT CUSTOMER RATE 
+
+SELECT 
+	ROUND(100*COUNT(*)/(SELECT COUNT(*) FROM CUSTOMERS),2) AS repeat_customer_rate
+FROM (
+	select customer_id 
+    FROM orders
+    group by customer_id
+    having count(*)> 1
+    )t;
+    
+
+
+# SECTION 5: OPERATIONAL KPIs
+
+# KPI 16: RETURN RATE 
+
+select round(100*sum(order_status='Returned')/count(*),2) as return_rate
+from orders;
+
+
+# KPI 17: CANCELLATION RATE 
+
+Select ROUND(100*SUM(order_status = 'Cancelled')/count(*),2) as cancellation_rate
+from orders;
+
+
+#KPI 17: LOST SHIPMENT RATE 
+
+select ROUND(100*sum(order_status = 'Lost')/
+	count(*),2) as lost_order_status
+from orders;
+
+
+# KPI 19: INVENTORY HEALTH
+
+select inventory_status, 
+	count(*) as products
+from inventory
+group by inventory_status;
+
+
+# KPI 20: AVEREAGE STOCK BY CATEGORY
+
+select 
+	c.category_name,
+    ROUND(AVG(i.stock_quantity),2) AS average_stock
+FROM inventory i
+join products p
+on i.product_id = p.product_id
+join categories c
+on p.category_id = c.category_id
+group by c.category_name
+order by average_stock desc;
+
+
+
+
+## ADVANCED BUSINESS ANALYSIS
+
+# QUERY 1 : TOP 10 CUSTOMERS BY LIFETIME VALUE (LTV)
+	# business qs? which customers generate the most revenue?
+
+select
+	c.customer_id,
+    c.`name`,
+    count(o.order_id) as total_orders,
+    round(sum(o.total_amount),2) as lifetime_value
+from customers c
+join orders o
+on c.customer_id = o.customer_id
+where o.order_status = 'Delivered'
+group by c.customer_id, c.`name`
+order by lifetime_value desc
+limit 10;
+
+
+# QUERY 2 - CUSTOMER PURCHASE FREQUENCY
+
+SELECT 
+	customer_id,
+    count(order_id) as total_orders,
+    round(avg(total_amount),2) as avg_order_value
+from orders
+where order_status = 'Delivered'
+group by customer_id
+order by total_orders desc;
+
+
+# QUERY 3 - TOP 10 CITIES BY REVENUE
+
+SELECT
+	c.city,
+    ROUND(SUM(o.total_amount),2) as revenue
+FROM customers c
+join orders o
+on c.customer_id = o.customer_id
+where o.order_status = 'Delivered'
+group by c.city
+order by revenue desc
+limit 10;
+
+
+# QUERY 4 - REVENUE BY STATE
+
+SELECT
+    c.state,
+    ROUND(SUM(o.total_amount),2) AS revenue
+FROM customers c
+JOIN orders o
+ON c.customer_id=o.customer_id
+WHERE o.order_status='Delivered'
+GROUP BY c.state
+ORDER BY revenue DESC;
+
+
+# QUERY 5 - ACQUISITTION CHANNEL PERFORMANCE
+
+SELECT
+    c.acquisition_channel,
+    COUNT(DISTINCT c.customer_id) AS customers,
+    COUNT(o.order_id) AS orders,
+    ROUND(SUM(o.total_amount),2) AS revenue
+FROM customers c
+LEFT JOIN orders o
+ON c.customer_id=o.customer_id
+AND o.order_status='Delivered'
+GROUP BY c.acquisition_channel
+ORDER BY revenue DESC;
+
+
+
+# QUERY 6 - LOYALTY TIER PERFORMANCE
+
+SELECT
+	loyalty_tier,
+    COUNT(DISTINCT c.customer_id) as customers,
+    ROUND(SUM(o.total_amount),2) as revenue,
+    ROUND(AVG(o.total_amount),2) as avg_order_value
+FROM customers c
+LEFT JOIN orders o
+ON c.customer_id = o.customer_id
+AND o.order_status = 'Delivered'
+GROUP BY loyalty_tier
+ORDER BY revenue desc;
+
+
+# QUERY 7 - PRODUCT PROFITABILITY
+
+SELECT
+	p.product_name,
+    ROUND(SUM(oi.line_total),2) as revenue,
+    ROUND((SUM(oi.unit_price - p.cost_price)* oi.quantity),2) AS estimated_profit
+FROM order_items oi
+JOIN products p
+ON oi.product_id = p.product_id
+GROUP BY p.product_name
+ORDER BY estimated_profit DESC
+LIMIT 15;
+
+
+# QUERY 8 - HIGHEST MARGIN PRODUCTS
+
+SELECT 
+	product_name,
+    cost_price,
+    selling_price,
+    ROUND(
+		((selling_price - cost_price)/selling_price)*100, 2)
+			AS margin_percent
+FROM products
+ORDER BY margin_percent DESC;
+
+
+# QUERY 9 - INVENTORY AT RISK
+		# Products that need restocking
+        
+SELECT 
+	inventory_id,
+    product_id,
+    stock_quantity,
+    reorder_level 
+FROM inventory
+WHERE stock_quantity <= reorder_level;
+
+
+# QUERY 10 - RETURN ANALYSIS BY CATEGORY
+
+SELECT
+	cat.category_name,
+	COUNT(r.return_id) AS total_returns
+FROM returns r
+
+JOIN orders o
+ON r.order_id=o.order_id
+
+JOIN order_items oi
+ON o.order_id=oi.order_id
+
+JOIN products p
+ON oi.product_id=p.product_id
+
+JOIN categories cat
+ON p.category_id=cat.category_id
+
+GROUP BY cat.category_name
+ORDER BY total_returns DESC;
+
+
+# QUERY 11 - AVERAGE RATING BY CATEGORY
+
+SELECT
+	cat.category_name,
+	ROUND(AVG(rv.rating),2) AS average_rating
+FROM reviews rv
+
+JOIN orders o
+ON rv.order_id=o.order_id
+
+JOIN order_items oi
+ON o.order_id=oi.order_id
+
+JOIN products p
+ON oi.product_id=p.product_id
+
+JOIN categories cat
+ON p.category_id=cat.category_id
+
+GROUP BY cat.category_name
+ORDER BY average_rating DESC;
+
+
+
+# QUERY 12 - MONTHLY REVENUE GROWTH (WINDOW FUNCTION)
+
+WITH monthly_sales AS (
+	SELECT DATE_FORMAT(order_date, '%Y-%m') AS month,
+    SUM(total_amount) AS revenue
+FROM orders
+WHERE order_status = 'Delivered'
+GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+)
+SELECT month, ROUND(revenue,2) as revenue,
+	ROUND(revenue - LAG(revenue) OVER (ORDER BY month),2)
+		AS revenue_change
+FROM monthly_sales;
+
+
+
+# QUERY 13 - RANK PRODUCTS BY REVENUE
+
+Select 
+	p.product_name,
+    SUM(oi.line_total) AS revenue,
+    RANK() OVER (ORDER BY SUM(oi.line_total) DESC) AS product_rank
+FROM order_items oi
+JOIN products p
+ON oi.product_id = p.product_id
+GROUP BY p.product_name;
+
+
+# QUERY 14 - TOP PRODUCT IN EACH CATEGORY (WINDOW FUNCTION)
+
+WITH product_sales AS 
+	( SELECT c.category_name, p.product_name, 
+		SUM(oi.line_total) revenue
+	 FROM order_items oi
+     
+     JOIN products p
+     ON oi.product_id = p.product_id
+     
+     JOIN categories c
+     ON p.category_id = c.category_id
+     
+     GROUP BY c.category_name, p.product_name)
+     
+SELECT * FROM (
+	SELECT *, 
+    ROW_NUMBER() OVER (PARTITION BY category_name ORDER BY revenue DESC) rn
+	FROM product_sales ) x
+WHERE rn =1;
+		
+    
+
+# QUERY 15 - CSUTOMER RFM FOUNDATION
+		# Customer segmentation model.
+        
+SELECT
+	customer_id,
+    MAX(order_date) AS last_purchase_date,
+    COUNT(order_id) AS frequency,
+    ROUND(SUM(total_amount),2) AS monetary
+FROM orders
+WHERE order_status = 'Delivered'
+GROUP BY customer_id;
+
+
+
+#VIEWS
+
+VIEW 1 - CUSTOMER SALES SUMMARY
+	# Business Purpose - every customer's performance in one table
+    
+CREATE VIEW vw_customer_sales AS
+SELECT 
+	c.customer_id,
+    c.`name`,
+    c.city,
+    c.state,
+    c.loyalty_tier,
+    COUNT(o.order_id) as total_orders,
+    ROUND(SUM(o.total_amount),2) as total_spent,
+    ROUND(AVG(o.total_amount),2) as AOV
+FROM customers c
+LEFT JOIN orders o
+	ON c.customer_id = o.customer_id
+AND o.order_status = 'Delivered'
+GROUP BY 
+	c.customer_id,
+    c.`name`,
+    c.city,
+    c.state,
+    c.loyalty_tier;
+    
+    
+SELECT * 
+FROM vw_customer_sales;
+
+
+
+# VIEW 2 - PRODUCT PERFORMANCE
+
+CREATE VIEW vw_product_performance AS 
+SELECT 
+	p.product_id,
+    p.product_name,
+    c.category_name,
+    p.brand,
+    SUM(oi.quantity) AS units_sold,
+    ROUND(SUM(oi.line_total),2) as revenue,
+    ROUND(
+		SUM((oi.unit_price - p.cost_price)*oi.quantity),2) AS estimated_profit
+FROM products p
+JOIN categories c
+	ON p.category_id = c.category_id
+LEFT JOIN order_items oi
+	ON p.product_id = oi.product_id
+GROUP BY
+	p.product_id,
+    p.product_name,
+    c.category_name,
+    p.brand;
+
+
+SELECT *
+FROM vw_product_performance;
+    
+
+
+# VIEW 3 - CATEGORY PERFORMANCE
+
+CREATE VIEW vw_category_performance AS
+SELECT 
+	c.category_name,
+    COUNT(DISTINCT p.product_id) AS total_products,
+    SUM(oi.quantity) AS units_sold,
+    ROUND(SUM(oi.line_total),2) as revenue
+FROM categories c
+LEFT JOIN products p
+	ON c.category_id=p.category_id
+LEFT JOIN order_items oi
+	ON p.product_id=oi.product_id
+GROUP BY c.category_name;
+    
+    
+SELECT *
+FROM vw_category_performance;    
+
+
+
+
+
+# VIEW 4 - MONTHLY SALES
+
+CREATE VIEW vw_monthly_sales AS
+SELECT
+	YEAR(order_date) AS year,
+    MONTH(order_date) AS month,
+    COUNT(order_id) AS total_orders,
+    ROUND(SUM(total_amount),2) AS revenue,
+    ROUND(AVG(total_amount),2) AS AOV
+from orders
+WHERE order_status = 'Delivered'
+GROUP BY YEAR(order_date), MONTH(order_date);
+
+SELECT *
+FROM vw_monthly_sales; 
+
+
+# VIEW 5 - INVENTORY DASHBOARD
+
+CREATE VIEW vw_inventory_status AS
+SELECT
+	i.inventory_id,
+	p.product_name,
+	c.category_name,
+	w.warehouse_name,
+	i.stock_quantity,
+	i.reorder_level,
+	i.inventory_status
+FROM inventory i
+JOIN products p
+	ON i.product_id=p.product_id
+JOIN categories c
+	ON p.category_id=c.category_id
+JOIN warehouses w
+	ON i.warehouse_id=w.warehouse_id;
+
+
+SELECT *
+FROM vw_inventory_status; 
+
+
+    
+# VIEW 6 - RETURNS DASHBOARD
+
+CREATE VIEW vw_return_analysis AS
+SELECT
+	r.return_id,
+	r.return_date,
+	r.return_reason,
+	r.refund_amount,
+	o.order_id,
+	c.`name`,
+	p.product_name,
+	cat.category_name
+FROM returns r
+JOIN orders o
+	ON r.order_id=o.order_id
+JOIN customers c
+	ON o.customer_id=c.customer_id
+JOIN order_items oi
+	ON o.order_id=oi.order_id
+JOIN products p
+	ON oi.product_id=p.product_id
+JOIN categories cat
+	ON p.category_id=cat.category_id;
+    
+
+SELECT *
+FROM vw_return_analysis; 
+
+
+# VIEW 7 - REVIEW DASHBOARD
+
+CREATE VIEW vw_review_summary AS
+SELECT
+rv.review_id,
+rv.rating,
+rv.review_date,
+p.product_name,
+cat.category_name,
+c.`name`
+FROM reviews rv
+JOIN orders o
+	ON rv.order_id=o.order_id
+JOIN customers c
+	ON o.customer_id=c.customer_id
+JOIN order_items oi
+	ON o.order_id=oi.order_id
+JOIN products p
+	ON oi.product_id=p.product_id
+JOIN categories cat
+	ON p.category_id=cat.category_id;
+
+SELECT *
+FROM vw_review_summary;
+
+
+
+# VIEW 8 - MARKETING PERFORMANCE
+
+CREATE VIEW vw_marketing_performance AS
+SELECT
+    mc.campaign_id,
+    mc.campaign_name,
+    COUNT(o.order_id) AS total_orders,
+    ROUND(COALESCE(SUM(o.total_amount),0),2) AS revenue,
+    ROUND(COALESCE(AVG(o.total_amount),0),2) AS average_order_value
+FROM marketing_campaigns mc
+LEFT JOIN orders o
+    ON mc.campaign_id = o.campaign_id
+   AND o.order_status = 'Delivered'
+GROUP BY
+    mc.campaign_id,
+    mc.campaign_name;
+
+
+SELECT *
+FROM vw_marketing_performance;
+
+
+
+# VIEW 9 - SHIPPING DASHBOARD
+
+CREATE VIEW vw_shipping_summary AS
+SELECT
+	s.shipping_id,
+	o.order_id,
+	c.`name`,
+	co.courier_name,
+	w.warehouse_name,
+	s.dispatch_date,
+	s.estimated_delivery_date,
+	s.actual_delivery_date,
+	s.shipping_status
+FROM shipping s
+JOIN orders o
+	ON s.order_id=o.order_id
+JOIN customers c
+	ON o.customer_id=c.customer_id
+JOIN couriers co
+	ON s.courier_id=co.courier_id
+JOIN warehouses w
+	ON s.warehouse_id=w.warehouse_id;
+    
+SELECT *
+FROM vw_review_summary;
