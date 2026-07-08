@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Ignore Power BI user-specific cache settings and local data
+*.pbi/
+**/cache.abf
+**/localSettings.json
